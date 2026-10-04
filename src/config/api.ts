@@ -1,4 +1,7 @@
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuthStore } from '@/store/auth';
 
 export const API_BASE_URL = (
   process.env.EXPO_PUBLIC_API_URL || 'https://small-business-shop-98wb.vercel.app'
@@ -8,6 +11,12 @@ const TOKEN_KEY = 'dave_store_jwt';
 
 export async function getAuthToken(): Promise<string | null> {
   try {
+    const memoryToken = useAuthStore.getState().token;
+    if (memoryToken) return memoryToken;
+
+    if (Platform.OS === 'web') {
+      return await AsyncStorage.getItem(TOKEN_KEY);
+    }
     return await SecureStore.getItemAsync(TOKEN_KEY);
   } catch {
     return null;
@@ -16,17 +25,25 @@ export async function getAuthToken(): Promise<string | null> {
 
 export async function setAuthToken(token: string): Promise<void> {
   try {
+    if (Platform.OS === 'web') {
+      await AsyncStorage.setItem(TOKEN_KEY, token);
+      return;
+    }
     await SecureStore.setItemAsync(TOKEN_KEY, token);
   } catch (err) {
-    console.warn('[SecureStore] Failed to save token:', err);
+    console.warn('[Storage] Failed to save token:', err);
   }
 }
 
 export async function clearAuthToken(): Promise<void> {
   try {
+    if (Platform.OS === 'web') {
+      await AsyncStorage.removeItem(TOKEN_KEY);
+      return;
+    }
     await SecureStore.deleteItemAsync(TOKEN_KEY);
   } catch (err) {
-    console.warn('[SecureStore] Failed to delete token:', err);
+    console.warn('[Storage] Failed to delete token:', err);
   }
 }
 
