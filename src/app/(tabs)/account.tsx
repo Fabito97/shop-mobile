@@ -6,19 +6,63 @@ import {
   TouchableOpacity,
   Linking,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import { User as UserIcon, LogOut, MessageCircle, MapPin, Package, Shield, ExternalLink } from 'lucide-react-native';
 import { Header } from '@/components/common/Header';
 import { LuxuryButton } from '@/components/common/LuxuryButton';
 import { useAuthStore } from '@/store/auth';
-import { OrderApi, Order } from '@/services/api';
+import { useCartSync } from '@/hooks/useCartSync';
+import { OrderApi, AuthApi, Order } from '@/services/api';
 import { BRAND } from '@/config/brand';
 import { formatNaira } from '@/utils/money';
 
+WebBrowser.maybeCompleteAuthSession();
+
 export default function AccountScreen() {
   const { user, token, logout, setSession } = useAuthStore();
+  const { sync } = useCartSync();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+    scopes: ['openid', 'profile', 'email'],
+    responseType: 'id_token',
+  });
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const idToken =
+        response.params?.id_token ||
+        (response as any).authentication?.idToken;
+
+      if (idToken) {
+        setSigningIn(true);
+        AuthApi.googleLogin(idToken)
+          .then(async (res) => {
+            if (res.data?.success && res.data.token && res.data.user) {
+              await setSession(res.data.token, res.data.user);
+              await sync();
+              Alert.alert('Welcome', `Signed in as ${res.data.user.name || res.data.user.email}`);
+            } else {
+              Alert.alert('Sign-In Failed', res.error || 'Unable to authenticate with Google.');
+            }
+          })
+          .catch((err) => {
+            Alert.alert('Error', err?.message || 'Authentication error.');
+          })
+          .finally(() => {
+            setSigningIn(false);
+          });
+      }
+    } else if (response?.type === 'error') {
+      Alert.alert('Google Sign-In Error', response.error?.message || 'Sign in was cancelled or failed.');
+    }
+  }, [response]);
 
   useEffect(() => {
     if (token) {
@@ -39,17 +83,6 @@ export default function AccountScreen() {
     const text = encodeURIComponent(BRAND.whatsapp.message);
     const url = `https://wa.me/${BRAND.whatsapp.number.replace(/\D/g, '')}?text=${text}`;
     Linking.openURL(url).catch(() => {});
-  };
-
-  const handleDemoSignIn = async () => {
-    // Allows seamless instant testing of user session on mobile
-    await setSession('mobile-client-session-token', {
-      id: 'demo-user-1',
-      name: 'Dave Store Collector',
-      email: 'collector@davestore.ng',
-      role: 'customer',
-      avatarUrl: null,
-    });
   };
 
   return (
@@ -102,13 +135,15 @@ export default function AccountScreen() {
                 Member Account
               </Text>
               <Text className="text-muted text-xs text-center mt-1 max-w-xs leading-relaxed">
-                Synchronize your cart across all your devices and track your courier delivery in real time.
+                Sign in with your Google account to synchronize your cart across devices and track your courier delivery in real time.
               </Text>
             </View>
 
             <LuxuryButton
-              title="Sign In with Account"
-              onPress={handleDemoSignIn}
+              title="Continue with Google"
+              loading={signingIn}
+              disabled={!request || signingIn}
+              onPress={() => promptAsync()}
               className="w-full"
             />
           </View>
