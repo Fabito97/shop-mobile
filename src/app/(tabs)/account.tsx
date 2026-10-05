@@ -7,9 +7,12 @@ import {
   Linking,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import * as AuthSession from 'expo-auth-session';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { User as UserIcon, LogOut, MessageCircle, MapPin, Package, Shield, ExternalLink } from 'lucide-react-native';
 import { Header } from '@/components/common/Header';
 import { LuxuryButton } from '@/components/common/LuxuryButton';
@@ -28,10 +31,23 @@ export default function AccountScreen() {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
 
+  const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+  const redirectUri = Platform.select({
+    web: AuthSession.makeRedirectUri(),
+    default: isExpoGo
+      ? 'https://auth.expo.io/@fabbenco/shop-mobile'
+      : AuthSession.makeRedirectUri({ scheme: 'shop-mobile' }),
+  });
+
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+    androidClientId:
+      process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ||
+      process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
     scopes: ['openid', 'profile', 'email'],
     responseType: 'id_token',
+    redirectUri,
   });
 
   useEffect(() => {
