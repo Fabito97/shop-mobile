@@ -149,4 +149,10 @@ export const AuthApi = {
       body: JSON.stringify({ idToken }),
     });
   },
+
+  async verifyToken() {
+    return apiFetch<{ success: boolean; token?: string; user: User }>('/api/auth/mobile/token', {
+      method: 'GET',
+    });
+  },
 };

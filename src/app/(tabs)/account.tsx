@@ -22,7 +22,7 @@ import { formatNaira } from '@/utils/money';
 WebBrowser.maybeCompleteAuthSession();
 
 export default function AccountScreen() {
-  const { user, token, logout, setSession } = useAuthStore();
+  const { user, token, logout, setSession, isCheckingAuth } = useAuthStore();
   const { sync } = useCartSync();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -94,7 +94,14 @@ export default function AccountScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       >
         {/* Profile / Authentication Status */}
-        {user ? (
+        {isCheckingAuth ? (
+          <View className="bg-charcoal p-8 rounded-xl border border-gold/25 mb-5 items-center justify-center min-h-[170px]">
+            <ActivityIndicator size="small" color="#C5A880" />
+            <Text className="text-sand text-xs mt-3 uppercase tracking-widest font-medium">
+              Verifying Membership...
+            </Text>
+          </View>
+        ) : user ? (
           <View className="bg-charcoal p-5 rounded-xl border border-gold/25 mb-5">
             <View className="flex-row items-center gap-3.5">
               <View className="w-12 h-12 rounded-full bg-gold/20 border border-gold/40 items-center justify-center">

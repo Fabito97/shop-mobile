@@ -29,6 +29,16 @@ function syncServerItem(productId: string, quantity: number, updatedAt: string) 
   CartApi.setItem(productId, quantity, updatedAt).catch(() => {});
 }
 
+function notifyLocalTabs() {
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    try {
+      const channel = new BroadcastChannel('dave_store_cart_channel');
+      channel.postMessage('cart_updated');
+      channel.close();
+    } catch {}
+  }
+}
+
 function syncServerClear() {
   CartApi.clear().catch(() => {});
 }
@@ -64,6 +74,7 @@ export const useCartStore = create<CartState>()(
           });
         }
         syncServerItem(item.productId, finalQty, nowIso);
+        notifyLocalTabs();
       },
 
       setQty: (productId, qty) => {
@@ -73,6 +84,7 @@ export const useCartStore = create<CartState>()(
         if (qty <= 0) {
           set({ items: items.filter((i) => i.productId !== productId) });
           syncServerItem(productId, 0, nowIso);
+        notifyLocalTabs();
           return;
         }
 
@@ -87,6 +99,7 @@ export const useCartStore = create<CartState>()(
           }),
         });
         syncServerItem(productId, clamped, nowIso);
+        notifyLocalTabs();
       },
 
       remove: (productId) => {
@@ -98,6 +111,7 @@ export const useCartStore = create<CartState>()(
       clear: () => {
         set({ items: [] });
         syncServerClear();
+        notifyLocalTabs();
       },
 
       setServerCart: (items) => {
