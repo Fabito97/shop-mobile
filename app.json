@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "shop-mobile",
+    "name": "Dave Store",
     "slug": "shop-mobile",
     "owner": "fabbenco",
     "scheme": "shop-mobile",
@@ -9,7 +9,8 @@
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.fabbenco.shopmobile"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +19,8 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.fabbenco.shopmobile"
     },
     "web": {
       "bundler": "metro",
@@ -39,6 +41,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d095eab0-74f9-40ab-affa-09ccbed3a706"
+      }
     }
   }
 }

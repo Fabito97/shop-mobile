@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 12.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://small-business-shop-98wb.vercel.app",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "351930789947-v8tcu272sdu25ff47mdnf49vcbg3q4oo.apps.googleusercontent.com"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://small-business-shop-98wb.vercel.app",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "351930789947-v8tcu272sdu25ff47mdnf49vcbg3q4oo.apps.googleusercontent.com"
+      }
+    }
+  }
+}
