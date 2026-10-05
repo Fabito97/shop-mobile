@@ -10,11 +10,13 @@
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://small-business-shop-98wb.vercel.app",
-        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "351930789947-v8tcu272sdu25ff47mdnf49vcbg3q4oo.apps.googleusercontent.com"
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "351930789947-v8tcu272sdu25ff47mdnf49vcbg3q4oo.apps.googleusercontent.com",
+        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=\"-Xmx3072m -XX:MaxMetaspaceSize=512m\" -Dorg.gradle.parallel=false -Dorg.gradle.workers.max=2"
       }
     },
     "production": {
@@ -23,7 +25,8 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://small-business-shop-98wb.vercel.app",
-        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "351930789947-v8tcu272sdu25ff47mdnf49vcbg3q4oo.apps.googleusercontent.com"
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "351930789947-v8tcu272sdu25ff47mdnf49vcbg3q4oo.apps.googleusercontent.com",
+        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=\"-Xmx3072m -XX:MaxMetaspaceSize=512m\" -Dorg.gradle.parallel=false -Dorg.gradle.workers.max=2"
       }
     }
   }

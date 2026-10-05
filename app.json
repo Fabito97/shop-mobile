@@ -36,6 +36,18 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraGradleProperties": {
+              "org.gradle.jvmargs": "-Xmx3072m -XX:MaxMetaspaceSize=512m",
+              "org.gradle.parallel": "false",
+              "org.gradle.workers.max": "2"
+            }
+          }
+        }
       ]
     ],
     "experiments": {
