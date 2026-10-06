@@ -13,6 +13,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as AuthSession from 'expo-auth-session';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { User as UserIcon, LogOut, MessageCircle, MapPin, Package, Shield, ExternalLink } from 'lucide-react-native';
 import { Header } from '@/components/common/Header';
 import { LuxuryButton } from '@/components/common/LuxuryButton';
@@ -24,6 +25,13 @@ import { formatNaira } from '@/utils/money';
 
 WebBrowser.maybeCompleteAuthSession();
 
+if (Platform.OS !== 'web') {
+  GoogleSignin.configure({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+    scopes: ['profile', 'email'],
+  });
+}
+
 export default function AccountScreen() {
   const { user, token, logout, setSession, isCheckingAuth } = useAuthStore();
   const { sync } = useCartSync();
@@ -31,6 +39,7 @@ export default function AccountScreen() {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
 
+  // Web fallback using expo-auth-session
   const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
   const redirectUri = Platform.select({
     web: AuthSession.makeRedirectUri(),
@@ -49,6 +58,52 @@ export default function AccountScreen() {
     responseType: 'id_token',
     redirectUri,
   });
+
+  // Handle native Google sign-in
+  const handleGoogleSignIn = async () => {
+    if (Platform.OS === 'web') {
+      promptAsync();
+      return;
+    }
+
+    try {
+      setSigningIn(true);
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const signInResult = await GoogleSignin.signIn();
+
+      if (signInResult.type === 'success' && signInResult.data?.idToken) {
+        const res = await AuthApi.googleLogin(signInResult.data.idToken);
+        if (res.data?.success && res.data.token && res.data.user) {
+          await setSession(res.data.token, res.data.user);
+          await sync();
+          Alert.alert('Welcome', `Signed in as ${res.data.user.name || res.data.user.email}`);
+        } else {
+          Alert.alert('Sign-In Failed', res.error || 'Unable to authenticate with Google.');
+        }
+      }
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        // User dismissed the account picker
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        // Sign-in already in progress
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert('Play Services Unavailable', 'Google Play Services is not available or outdated.');
+      } else {
+        Alert.alert('Sign-In Error', error?.message || 'Authentication error.');
+      }
+    } finally {
+      setSigningIn(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        await GoogleSignin.signOut().catch(() => {});
+      }
+    } catch (_) {}
+    await logout();
+  };
 
   useEffect(() => {
     if (response?.type === 'success') {
@@ -139,7 +194,7 @@ export default function AccountScreen() {
             </View>
 
             <TouchableOpacity
-              onPress={logout}
+              onPress={handleLogout}
               className="mt-4 pt-3 border-t border-gold/15 flex-row items-center gap-2 justify-center"
             >
               <LogOut size={14} color="#EF4444" />
@@ -165,8 +220,8 @@ export default function AccountScreen() {
             <LuxuryButton
               title="Continue with Google"
               loading={signingIn}
-              disabled={!request || signingIn}
-              onPress={() => promptAsync()}
+              disabled={signingIn}
+              onPress={handleGoogleSignIn}
               className="w-full"
             />
           </View>
